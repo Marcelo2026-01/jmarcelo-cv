@@ -295,6 +295,11 @@
                     <button class="w-11 h-11 lg:w-8 lg:h-8 rounded-md flex items-center justify-center hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors btn-press ml-2" onclick="App.cmd.open()" title="Pesquisa / Comandos (Ctrl+K)"><i class="fa-solid fa-magnifying-glass"></i></button>
                 </div>
                 
+                <!-- NEW PWA INSTALL BUTTON (HIDDEN BY DEFAULT) -->
+                <button id="btn-install-app" class="hidden bg-zinc-900 border border-brand-500/30 hover:bg-zinc-800 text-brand-400 px-3 sm:px-4 py-3 lg:py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-colors items-center gap-2 shadow-sm btn-press" onclick="App.pwa.install()" title="Instalar Aplicativo">
+                    <i class="fa-solid fa-mobile-screen-button"></i> <span class="hidden sm:inline">Instalar App</span>
+                </button>
+
                 <button class="bg-brand-600 hover:bg-brand-500 text-white px-3 sm:px-4 py-3 lg:py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-colors flex items-center gap-2 shadow-sm btn-press" onclick="App.pdf.prePrintCheck()">
                     <i class="fa-solid fa-print"></i> <span class="hidden sm:inline">Exportar PDF</span><span class="sm:hidden">PDF</span>
                 </button>
@@ -875,6 +880,47 @@
                 this.ui.buildMobileNav();
                 this.ui.setupListeners();
                 this.cmd.init();
+            },
+
+            pwa: {
+                deferredPrompt: null,
+                init() {
+                    window.addEventListener('beforeinstallprompt', (e) => {
+                        e.preventDefault();
+                        this.deferredPrompt = e;
+                        const btn = document.getElementById('btn-install-app');
+                        if (btn) {
+                            btn.classList.remove('hidden');
+                            btn.classList.add('flex');
+                        }
+                    });
+
+                    window.addEventListener('appinstalled', () => {
+                        this.deferredPrompt = null;
+                        const btn = document.getElementById('btn-install-app');
+                        if (btn) {
+                            btn.classList.add('hidden');
+                            btn.classList.remove('flex');
+                        }
+                        App.ui.toast('Aplicativo instalado com sucesso!', 'success');
+                    });
+                },
+                async install() {
+                    if (!this.deferredPrompt) {
+                        App.ui.toast('A instalação já foi realizada ou não é suportada.', 'info');
+                        return;
+                    }
+                    this.deferredPrompt.prompt();
+                    const { outcome } = await this.deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        this.deferredPrompt = null;
+                        const btn = document.getElementById('btn-install-app');
+                        if (btn) {
+                            btn.classList.add('hidden');
+                            btn.classList.remove('flex');
+                        }
+                    }
+                }
             },
 
             nlp: {
@@ -2083,6 +2129,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             App.init();
+            App.pwa.init();
             
             // Registrar o Service Worker para habilitar a instalação no celular
             if ('serviceWorker' in navigator) {
