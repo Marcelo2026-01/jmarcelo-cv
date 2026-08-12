@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>J.Marcelo CV Studio | Preparação Profissional</title>
     
+    <!-- Configuração PWA (Instalação no Celular) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="JM CV Studio">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2074,7 +2081,18 @@
         App.projects.debouncedSave = App.util.debounce(() => { App.projects.save(false); }, 800);
         App.history.debouncedPush = App.util.debounce(() => { App.history.push(); }, 800);
 
-        window.addEventListener('DOMContentLoaded', () => App.init());
+        window.addEventListener('DOMContentLoaded', () => {
+            App.init();
+            
+            // Registrar o Service Worker para habilitar a instalação no celular
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('./sw.js')
+                        .then(reg => console.log('Service Worker registrado com sucesso!', reg))
+                        .catch(err => console.error('Erro ao registrar Service Worker:', err));
+                });
+            }
+        });
     </script>
 </body>
 </html>
